@@ -341,17 +341,10 @@ class TeleprompterDisplay {
         const fontSize = parseFloat(computedStyle.fontSize) || 48;
         let lineHeight = parseFloat(computedStyle.lineHeight);
         if (isNaN(lineHeight)) lineHeight = fontSize * 1.6;
-        const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-        const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
-        const availableWidth = Math.max(this.prompterText.clientWidth - paddingLeft - paddingRight, 1);
 
-        // Estimate words per line from font size and available width
-        // Average word ≈ 5 chars + space, avg char width ≈ 0.5 × fontSize
-        const avgWordWidth = fontSize * 3;
-        const wordsPerLine = availableWidth / avgWordWidth;
-
-        // pixels/sec = (WPM / wordsPerLine) lines/min × lineHeight px/line ÷ 60 sec/min
-        const pixelsPerSecond = (this.speed * lineHeight) / (wordsPerLine * 60);
+        const targetWPM = this.speed;
+        const avgWordsPerLine = 8; // среднее эмпирическое значение для твоего шрифта/ширины
+        const pixelsPerSecond = (targetWPM * lineHeight) / (avgWordsPerLine * 60);
 
         const scroll = () => {
             if (!this.isPlaying) return;
@@ -359,6 +352,7 @@ class TeleprompterDisplay {
             if (pixelsPerSecond > 0) {
                 const elapsed = Date.now() - this.startTime;
                 this.currentPosition = (elapsed / 1000) * pixelsPerSecond;
+
                 this.prompterText.style.transform = `translateY(${-this.currentPosition}px)`;
             }
 

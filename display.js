@@ -219,6 +219,12 @@ class TeleprompterDisplay {
         }
     }
 
+    getWordCount() {
+        const text = this.prompterText.textContent || this.prompterText.innerText || '';
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+        return words.length;
+    }
+
     setMirrorMode(enabled) {
         if (enabled) {
             document.body.classList.add('mirror-mode');
@@ -330,14 +336,29 @@ class TeleprompterDisplay {
     }
 
     startScrolling() {
+        // Calculate scroll speed from font metrics only (independent of text length)
+        const computedStyle = window.getComputedStyle(this.prompterText);
+        const fontSize = parseFloat(computedStyle.fontSize) || 48;
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        if (isNaN(lineHeight)) lineHeight = fontSize * 1.6;
+        const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+        const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+        const availableWidth = Math.max(this.prompterText.clientWidth - paddingLeft - paddingRight, 1);
+
+        // Estimate words per line from font size and available width
+        // Average word ≈ 5 chars + space, avg char width ≈ 0.5 × fontSize
+        const avgWordWidth = fontSize * 3;
+        const wordsPerLine = availableWidth / avgWordWidth;
+
+        // pixels/sec = (WPM / wordsPerLine) lines/min × lineHeight px/line ÷ 60 sec/min
+        const pixelsPerSecond = (this.speed * lineHeight) / (wordsPerLine * 60);
+
         const scroll = () => {
             if (!this.isPlaying) return;
 
-            const textHeight = this.prompterText.scrollHeight;
-
-            if (this.segmentDuration > 0 && textHeight > 0) {
+            if (pixelsPerSecond > 0) {
                 const elapsed = Date.now() - this.startTime;
-                this.currentPosition = (elapsed / this.segmentDuration) * textHeight;
+                this.currentPosition = (elapsed / 1000) * pixelsPerSecond;
                 this.prompterText.style.transform = `translateY(${-this.currentPosition}px)`;
             }
 

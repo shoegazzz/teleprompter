@@ -67,32 +67,17 @@
                 
                 <div class="control-group">
                     <label for="speed-control">Speed (words/min):</label>
-                    <input type="range" id="speed-control" min="60" max="300" value="150">
-                    <span id="speed-display">150</span>
+                    <input type="range" id="speed-control" min="10" max="100" value="50">
+                    <span id="speed-display">50</span>
                 </div>
                 
                 <div class="control-group">
-                    <label for="segment-length">Segment Length:</label>
-                    <div class="time-input-group">
-                        <div class="time-input">
-                            <input type="number" id="segment-minutes" min="0" max="99" value="10">
-                            <label for="segment-minutes">min</label>
-                        </div>
-                        <div class="time-separator">:</div>
-                        <div class="time-input">
-                            <input type="number" id="segment-seconds" min="0" max="59" value="0">
-                            <label for="segment-seconds">sec</label>
-                        </div>
-                    </div>
                     <div class="duration-info">
                         <div class="info-row">
                             <span>Word count: <span id="word-count">0</span></span>
                         </div>
                         <div class="info-row">
                             <span>Expected duration: <span id="expected-duration">0:00</span></span>
-                        </div>
-                        <div class="info-row duration-diff" id="duration-diff">
-                            <span>Difference: <span id="diff-value">0:00</span></span>
                         </div>
                     </div>
                 </div>
@@ -165,7 +150,7 @@
                 <div class="timer-display">
                     <div class="timer-item">
                         <label>Segment Time:</label>
-                        <span id="segment-timer">10:00</span>
+                        <span id="segment-timer">00:00</span>
                     </div>
                     <div class="timer-item">
                         <label>Elapsed:</label>

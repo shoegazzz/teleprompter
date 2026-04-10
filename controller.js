@@ -6,8 +6,8 @@ class TeleprompterController {
         this.currentPosition = 0;
         this.startTime = null;
         this.pausedTime = 0;
-        this.segmentDuration = 10 * 60 * 1000;
-        this.speed = 150;
+        this.segmentDuration = 0; // auto-calculated from text and speed
+        this.speed = 50;
         this.fontSize = 48;
         this.timerInterval = null;
         this.reconnectAttempts = 0;
@@ -26,8 +26,6 @@ class TeleprompterController {
         this.clearBtn = document.getElementById('clear-text');
         this.speedControl = document.getElementById('speed-control');
         this.speedDisplay = document.getElementById('speed-display');
-        this.segmentMinutesInput = document.getElementById('segment-minutes');
-        this.segmentSecondsInput = document.getElementById('segment-seconds');
         this.fontSizeControl = document.getElementById('font-size');
         this.fontSizeDisplay = document.getElementById('font-size-display');
         this.mirrorModeCheckbox = document.getElementById('mirror-mode');
@@ -42,8 +40,6 @@ class TeleprompterController {
         this.textPreview = document.getElementById('text-preview');
         this.wordCount = document.getElementById('word-count');
         this.expectedDuration = document.getElementById('expected-duration');
-        this.durationDiff = document.getElementById('duration-diff');
-        this.diffValue = document.getElementById('diff-value');
         this.segmentTimer = document.getElementById('segment-timer');
         this.elapsedTimer = document.getElementById('elapsed-timer');
         this.connectionStatus = document.getElementById('connection-status');
@@ -65,8 +61,6 @@ class TeleprompterController {
         this.fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
         this.clearBtn.addEventListener('click', () => this.clearText());
         this.speedControl.addEventListener('input', (e) => this.updateSpeed(e.target.value));
-        this.segmentMinutesInput.addEventListener('input', () => this.updateSegmentLength());
-        this.segmentSecondsInput.addEventListener('input', () => this.updateSegmentLength());
         this.fontSizeControl.addEventListener('input', (e) => this.updateFontSize(e.target.value));
         this.mirrorModeCheckbox.addEventListener('change', (e) => this.updateMirrorMode(e.target.checked));
         this.hideTimerCheckbox.addEventListener('change', (e) => this.updateHideTimer(e.target.checked));
@@ -176,7 +170,7 @@ class TeleprompterController {
         // Send all current settings
         this.sendMessage({ type: 'setSpeed', value: this.speed });
         this.sendMessage({ type: 'setFontSize', value: this.fontSize });
-        this.updateSegmentLength(); // This will send the segment length
+        this.updateDurationCalculations(); // This will auto-calculate and send the segment length
         this.sendMessage({ type: 'setMirrorMode', enabled: this.mirrorModeCheckbox.checked });
         this.sendMessage({ type: 'setHideTimer', enabled: this.hideTimerCheckbox.checked });
         this.sendMessage({ type: 'setOnAir', enabled: this.onAirModeCheckbox.checked });
@@ -303,25 +297,6 @@ class TeleprompterController {
         this.speedDisplay.textContent = this.speed;
         this.sendMessage({ type: 'setSpeed', value: this.speed });
         this.updateDurationCalculations();
-    }
-    
-    updateSegmentLength() {
-        const minutes = parseInt(this.segmentMinutesInput.value) || 0;
-        const seconds = parseInt(this.segmentSecondsInput.value) || 0;
-        
-        // Convert to milliseconds
-        this.segmentDuration = (minutes * 60 + seconds) * 1000;
-        
-        // Send total seconds to server
-        this.sendMessage({ 
-            type: 'setSegmentLength', 
-            minutes: minutes,
-            seconds: seconds,
-            totalSeconds: minutes * 60 + seconds
-        });
-        
-        this.updateDurationCalculations();
-        this.updateCountdownDisplay();
     }
     
     updateFontSize(value) {
@@ -473,24 +448,21 @@ class TeleprompterController {
     updateDurationCalculations() {
         const wordCount = this.getWordCount();
         const expectedDurationMs = this.calculateExpectedDuration(wordCount);
-        const segmentDurationMs = this.segmentDuration;
-        
+
+        // Auto-set segment duration from text and speed
+        this.segmentDuration = expectedDurationMs;
+
         this.wordCount.textContent = wordCount.toLocaleString();
         this.expectedDuration.textContent = this.formatDuration(expectedDurationMs);
-        
-        // Calculate and display difference
-        const differenceMs = segmentDurationMs - expectedDurationMs;
-        this.diffValue.textContent = this.formatDurationDiff(differenceMs);
-        
-        // Update styling based on difference
-        this.durationDiff.classList.remove('positive', 'negative', 'neutral');
-        if (Math.abs(differenceMs) < 30000) {
-            this.durationDiff.classList.add('neutral');
-        } else if (differenceMs > 0) {
-            this.durationDiff.classList.add('positive');
-        } else {
-            this.durationDiff.classList.add('negative');
-        }
+
+        // Send auto-calculated segment length to server
+        const totalSeconds = Math.floor(expectedDurationMs / 1000);
+        this.sendMessage({
+            type: 'setSegmentLength',
+            totalSeconds: totalSeconds
+        });
+
+        this.updateCountdownDisplay();
     }
     
     getWordCount() {
@@ -508,16 +480,6 @@ class TeleprompterController {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-    formatDurationDiff(milliseconds) {
-        const isNegative = milliseconds < 0;
-        const absMs = Math.abs(milliseconds);
-        const totalSeconds = Math.floor(absMs / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        const sign = isNegative ? '-' : '+';
-        return `${sign}${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
     
     updateConnectionStatus(status, text) {

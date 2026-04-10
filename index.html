@@ -17,22 +17,17 @@
             
             <div class="control-group">
                 <label for="speed-control">Speed (words/min):</label>
-                <input type="range" id="speed-control" min="60" max="300" value="150">
-                <span id="speed-display">150</span>
+                <input type="range" id="speed-control" min="10" max="100" value="50">
+                <span id="speed-display">50</span>
             </div>
             
             <div class="control-group">
-                <label for="segment-length">Segment Length (minutes):</label>
-                <input type="number" id="segment-length" min="1" max="60" value="10">
                 <div class="duration-info">
                     <div class="info-row">
                         <span>Word count: <span id="word-count">0</span></span>
                     </div>
                     <div class="info-row">
                         <span>Expected duration: <span id="expected-duration">0:00</span></span>
-                    </div>
-                    <div class="info-row duration-diff" id="duration-diff">
-                        <span>Difference: <span id="diff-value">0:00</span></span>
                     </div>
                 </div>
             </div>
@@ -52,7 +47,7 @@
         
         <div class="prompter-area">
             <div class="timer-display">
-                <div id="countdown-timer">10:00</div>
+                <div id="countdown-timer">00:00</div>
                 <div id="elapsed-time">00:00</div>
             </div>
             

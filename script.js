@@ -5,8 +5,8 @@ class Teleprompter {
         this.currentPosition = 0;
         this.startTime = null;
         this.pausedTime = 0;
-        this.segmentDuration = 10 * 60 * 1000; // 10 minutes in milliseconds
-        this.speed = 150; // words per minute
+        this.segmentDuration = 0; // auto-calculated from text and speed
+        this.speed = 50; // words per minute
         this.fontSize = 32;
         this.animationId = null;
         this.timerInterval = null;
@@ -22,7 +22,6 @@ class Teleprompter {
         this.clearBtn = document.getElementById('clear-text');
         this.speedControl = document.getElementById('speed-control');
         this.speedDisplay = document.getElementById('speed-display');
-        this.segmentLengthInput = document.getElementById('segment-length');
         this.fontSizeControl = document.getElementById('font-size');
         this.fontSizeDisplay = document.getElementById('font-size-display');
         this.startBtn = document.getElementById('start-btn');
@@ -33,15 +32,12 @@ class Teleprompter {
         this.elapsedTime = document.getElementById('elapsed-time');
         this.wordCount = document.getElementById('word-count');
         this.expectedDuration = document.getElementById('expected-duration');
-        this.durationDiff = document.getElementById('duration-diff');
-        this.diffValue = document.getElementById('diff-value');
     }
     
     bindEvents() {
         this.fileUpload.addEventListener('change', (e) => this.handleFileUpload(e));
         this.clearBtn.addEventListener('click', () => this.clearText());
         this.speedControl.addEventListener('input', (e) => this.updateSpeed(e.target.value));
-        this.segmentLengthInput.addEventListener('input', (e) => this.updateSegmentLength(e.target.value));
         this.fontSizeControl.addEventListener('input', (e) => this.updateFontSize(e.target.value));
         this.startBtn.addEventListener('click', () => this.start());
         this.pauseBtn.addEventListener('click', () => this.pause());
@@ -155,12 +151,6 @@ class Teleprompter {
         this.updateDurationCalculations();
     }
     
-    updateSegmentLength(value) {
-        this.segmentDuration = parseInt(value) * 60 * 1000; // Convert minutes to milliseconds
-        this.updateCountdownDisplay();
-        this.updateDurationCalculations();
-    }
-    
     updateFontSize(value) {
         this.fontSize = parseInt(value);
         this.fontSizeDisplay.textContent = this.fontSize + 'px';
@@ -226,31 +216,21 @@ class Teleprompter {
         this.stopTimer();
         
         // Reset text position
-        this.prompterText.style.transform = 'translateY(50%)';
+        this.prompterText.style.transform = 'translateY(0px)';
         this.updateDisplay();
     }
     
     updateDurationCalculations() {
         const wordCount = this.getWordCount();
         const expectedDurationMs = this.calculateExpectedDuration(wordCount);
-        const segmentDurationMs = this.segmentDuration;
-        
+
+        // Auto-set segment duration from text and speed
+        this.segmentDuration = expectedDurationMs;
+
         this.wordCount.textContent = wordCount.toLocaleString();
         this.expectedDuration.textContent = this.formatDuration(expectedDurationMs);
-        
-        // Calculate and display difference
-        const differenceMs = segmentDurationMs - expectedDurationMs;
-        this.diffValue.textContent = this.formatDurationDiff(differenceMs);
-        
-        // Update styling based on difference
-        this.durationDiff.classList.remove('positive', 'negative', 'neutral');
-        if (Math.abs(differenceMs) < 30000) { // Less than 30 seconds difference
-            this.durationDiff.classList.add('neutral');
-        } else if (differenceMs > 0) {
-            this.durationDiff.classList.add('positive');
-        } else {
-            this.durationDiff.classList.add('negative');
-        }
+
+        this.updateCountdownDisplay();
     }
     
     getWordCount() {
@@ -272,32 +252,21 @@ class Teleprompter {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
     
-    formatDurationDiff(milliseconds) {
-        const isNegative = milliseconds < 0;
-        const absMs = Math.abs(milliseconds);
-        const totalSeconds = Math.floor(absMs / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        const sign = isNegative ? '-' : '+';
-        return `${sign}${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
     startScrolling() {
         const scroll = () => {
             if (!this.isPlaying) return;
-            
-            // Calculate scroll speed based on words per minute
-            // Assuming average word length of 5 characters and line height
-            const wordsPerSecond = this.speed / 60;
-            const pixelsPerSecond = wordsPerSecond * 8; // Approximate pixels per word
-            const pixelsPerFrame = pixelsPerSecond / 60; // 60 FPS
-            
-            this.currentPosition += pixelsPerFrame;
-            this.prompterText.style.transform = `translateY(${50 - (this.currentPosition / window.innerHeight) * 100}%)`;
-            
+
+            const textHeight = this.prompterText.scrollHeight;
+
+            if (this.segmentDuration > 0 && textHeight > 0) {
+                const elapsed = Date.now() - this.startTime;
+                this.currentPosition = (elapsed / this.segmentDuration) * textHeight;
+                this.prompterText.style.transform = `translateY(${-this.currentPosition}px)`;
+            }
+
             this.animationId = requestAnimationFrame(scroll);
         };
-        
+
         this.animationId = requestAnimationFrame(scroll);
     }
     

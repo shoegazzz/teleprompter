@@ -143,25 +143,6 @@ button:disabled {
     margin-bottom: 0;
 }
 
-.duration-diff {
-    font-weight: bold;
-    border-top: 1px solid #444;
-    padding-top: 8px;
-    margin-top: 8px;
-}
-
-.duration-diff.positive {
-    color: #28a745;
-}
-
-.duration-diff.negative {
-    color: #dc3545;
-}
-
-.duration-diff.neutral {
-    color: #ffc107;
-}
-
 .prompter-area {
     flex: 1;
     display: flex;

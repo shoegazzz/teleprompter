@@ -13,7 +13,7 @@ class TeleprompterController {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
-        
+
         this.initializeElements();
         this.bindEvents();
         this.connectWebSocket();
@@ -55,6 +55,8 @@ class TeleprompterController {
         this.formatParagraphsCheckbox = document.getElementById('format-paragraphs');
         this.formatPunctuationCheckbox = document.getElementById('format-punctuation');
         this.formatNumbersCheckbox = document.getElementById('format-numbers');
+        this.mirrorModeCheckbox.checked = true;
+        this.hideTimerCheckbox.checked = true;
     }
     
     bindEvents() {
@@ -354,10 +356,7 @@ class TeleprompterController {
         this.isPlaying = true;
         this.isPaused = false;
         this.startTime = Date.now() - (this.pausedTime || 0);
-        
-        // Auto-enable on air indicator
-        this.onAirModeCheckbox.checked = true;
-        
+
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
         

@@ -90,7 +90,7 @@ body {
 .controller-content {
     flex: 1;
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 20px;
     padding: 20px;
 }
